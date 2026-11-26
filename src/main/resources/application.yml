@@ -28,6 +28,12 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
   seed:
     enabled: ${SEED_DEMO_DATA:true}
+  push:
+    # expo: send through Expo's push service. log: only log (no network).
+    provider: ${PUSH_PROVIDER:expo}
+    expo-url: ${EXPO_PUSH_URL:https://exp.host/--/api/v2/push/send}
+    # Optional. Only needed if "enhanced push security" is turned on in the Expo project.
+    expo-access-token: ${EXPO_ACCESS_TOKEN:}
 
 springdoc:
   swagger-ui:

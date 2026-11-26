@@ -30,6 +30,10 @@
             "description": "In-app notifications for the logged-in user"
         },
         {
+            "name": "Devices",
+            "description": "Expo push tokens for the signed-in user's phones"
+        },
+        {
             "name": "Users",
             "description": "Committee-only management of residents, guards and committee members"
         },
@@ -445,6 +449,54 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/api/devices": {
+            "post": {
+                "tags": [
+                    "Devices"
+                ],
+                "summary": "Register this phone's Expo push token. Call after login and whenever the token changes",
+                "operationId": "register",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterDeviceRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/api/devices/unregister": {
+            "post": {
+                "tags": [
+                    "Devices"
+                ],
+                "summary": "Stop pushes to this phone. Call on logout, before dropping the JWT",
+                "operationId": "unregister",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UnregisterDeviceRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -1229,6 +1281,40 @@
                         "type": "string"
                     }
                 }
+            },
+            "RegisterDeviceRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 0
+                    },
+                    "platform": {
+                        "type": "string",
+                        "enum": [
+                            "IOS",
+                            "ANDROID"
+                        ]
+                    }
+                },
+                "required": [
+                    "platform",
+                    "token"
+                ]
+            },
+            "UnregisterDeviceRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "token"
+                ]
             },
             "Log": {
                 "type": "object",

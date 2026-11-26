@@ -30,9 +30,9 @@ public class AlertService {
         a.setRaisedBy(raiser);
         a.setFlatNumber(raiser.getFlatNumber());
         alerts.save(a);
-        String where = raiser.getFlatNumber() == null ? raiser.getName() : "Flat " + raiser.getFlatNumber();
+        String where = raiser.getFlatNumber() == null ? raiser.getName() : raiser.getFlatNumber();
         notifications.notifyRoles(List.of(Role.GUARD, Role.COMMITTEE), NotificationType.EMERGENCY_ALERT,
-                "EMERGENCY: " + a.getType() + " at " + where,
+                "\uD83D\uDEA8 " + label(a.getType()) + ", " + where,
                 (a.getMessage() == null ? "" : a.getMessage() + " · ") + "Call " + raiser.getName() + " on " + raiser.getPhone(),
                 a.getId());
         return AlertDto.from(a);
@@ -81,6 +81,15 @@ public class AlertService {
         notifications.notifyAll(List.of(a.getRaisedBy()), NotificationType.ALERT_UPDATE,
                 "Alert resolved", responder.getName() + " marked your alert as resolved", a.getId());
         return AlertDto.from(a);
+    }
+
+    private static String label(AlertType type) {
+        return switch (type) {
+            case MEDICAL -> "Medical emergency";
+            case FIRE -> "Fire";
+            case SECURITY -> "Security emergency";
+            case OTHER -> "Emergency";
+        };
     }
 
     private Alert find(Long id) {

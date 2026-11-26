@@ -17,7 +17,7 @@ It serves the mobile app in [oursecurity-fe](https://github.com/prasanthdsd/ours
 | Users | committee | Add residents, guards and committee members. Remove (deactivate) them. |
 | Notices | committee posts, everyone reads | Community notice board. |
 | Reports | committee | Dashboard counts: visitors today, pending approvals, deliveries at gate, open alerts, residents, guards. |
-| Notifications | everyone | In-app notifications for approval requests, arrivals, deliveries and alerts. |
+| Notifications | everyone | In-app notifications plus push notifications to phones (through Expo) for approval requests, arrivals, deliveries, alerts and notices. |
 
 ## Run it locally
 
@@ -81,9 +81,28 @@ curl -s -X POST localhost:8080/api/auth/login -H 'Content-Type: application/json
 | GET | `/api/reports/summary` | committee |
 | GET | `/api/notifications` | any |
 | POST | `/api/notifications/{id}/read` | any |
+| POST | `/api/devices` | any |
+| POST | `/api/devices/unregister` | any |
 
 Visit statuses: `PRE_APPROVED → CHECKED_IN → CHECKED_OUT` for invited guests, and
 `PENDING_APPROVAL → APPROVED → CHECKED_IN → CHECKED_OUT` (or `DENIED`) for walk-ins. `CANCELLED` before check-in.
+
+## Push notifications
+
+The app registers its Expo push token with `POST /api/devices {"token":"ExponentPushToken[...]","platform":"ANDROID"}` after login,
+and calls `POST /api/devices/unregister {"token":...}` on logout. If another user signs in on the same phone, the token moves to them.
+
+Pushes go through [Expo's push service](https://docs.expo.dev/push-notifications/sending-notifications/), so the server needs no
+Firebase or Apple keys. They are sent after the database commit, in the background, and tokens Expo reports as
+`DeviceNotRegistered` are deleted. Every push carries `data = {type, id}`:
+
+| `data.type` | Sent to | When | Android channel |
+|---|---|---|---|
+| `VISIT_REQUEST` | residents of the flat | guard logs a walk-in | `gate` |
+| `VISIT_UPDATE` | guards / residents of the flat | resident approves or denies / visitor checks in | `gate` |
+| `DELIVERY` | residents of the flat / guards | guard logs a delivery / resident sets an instruction | `default` |
+| `ALERT` | all guards and committee / the person who raised it | alert raised / acknowledged or resolved | `alerts` |
+| `NOTICE` | everyone except the poster | committee posts a notice | `default` |
 
 ## Configuration
 
@@ -99,6 +118,8 @@ Set with environment variables:
 | `APP_TIME_ZONE` | Asia/Kolkata | used for "visitors today" |
 | `PASS_VALIDITY` | 24h | how long a pre-approval pass works after its expected time |
 | `SEED_DEMO_DATA` | true | off under the `prod` profile |
+| `PUSH_PROVIDER` | expo | `expo` sends real pushes, `log` only logs them |
+| `EXPO_ACCESS_TOKEN` | empty | only if "enhanced push security" is on in the Expo project |
 
 Production: `SPRING_PROFILES_ACTIVE=prod` with PostgreSQL. It requires `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` and `CORS_ALLOWED_ORIGINS`, and turns off demo data. A `Dockerfile` is included.
 
@@ -109,10 +130,11 @@ Production: `SPRING_PROFILES_ACTIVE=prod` with PostgreSQL. It requires `DB_URL`,
 ```
 
 `ApiFlowTest` runs the main flows end to end through the HTTP API: login, pre-approval with pass code, walk-in approval, deliveries, emergency alerts, user management, notices and role checks.
+`PushFlowTest` covers device registration and which pushes each event sends, and `ExpoPushGatewayTest` covers the Expo request format, batching and dead-token handling.
 
 ## Not done yet
 
-- Push notifications. `PushSender` only logs today; add an FCM or Expo push implementation once the app registers device tokens.
+- Push receipts. Expo's second step (checking receipts about 15 minutes later) is not polled yet, so some dead tokens are only removed on the next send.
 - Schema migrations. Hibernate creates the tables (`ddl-auto=update`); switch to Flyway before real data.
 - One community per deployment. Multi-community support would add a community id to users and records.
 - Password reset, OTP login, refresh tokens, visitor photos, and rate limiting on login.
