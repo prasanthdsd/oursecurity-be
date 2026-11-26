@@ -1,0 +1,14 @@
+# Activate with SPRING_PROFILES_ACTIVE=prod. Expects PostgreSQL and a real JWT secret.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  seed:
+    enabled: false

@@ -1,0 +1,1460 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "OurSecurity API",
+        "description": "REST API for the OurSecurity gated community app.\nLog in with POST /api/auth/login, then send the token as `Authorization: Bearer <token>`.\nRoles: RESIDENT, GUARD, COMMITTEE. Errors are returned as {\"message\": \"...\"}.",
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Generated server url"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Emergency alerts",
+            "description": "SOS alerts that notify all guards and committee members"
+        },
+        {
+            "name": "Visits",
+            "description": "Visitor pre-approval, walk-in approval and gate check-in/out"
+        },
+        {
+            "name": "Notifications",
+            "description": "In-app notifications for the logged-in user"
+        },
+        {
+            "name": "Users",
+            "description": "Committee-only management of residents, guards and committee members"
+        },
+        {
+            "name": "Deliveries",
+            "description": "Packages received at the gate"
+        },
+        {
+            "name": "Notices",
+            "description": "Community notice board"
+        }
+    ],
+    "paths": {
+        "/api/visits/{id}/deny": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Resident denies a walk-in visitor",
+                "operationId": "deny",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/{id}/check-out": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Guard checks a visitor out as they leave",
+                "operationId": "checkOut",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/{id}/check-in": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Guard checks in a pre-approved or approved visitor by id",
+                "operationId": "checkIn",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Resident cancels a visit that has not checked in yet",
+                "operationId": "cancel",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Resident approves a walk-in visitor waiting at the gate",
+                "operationId": "approve",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/walk-in": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Guard logs an unannounced visitor. Residents of the flat are asked to approve",
+                "operationId": "walkIn",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WalkIn"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/verify": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Guard enters a visitor's pass code. A valid code checks the visitor in",
+                "operationId": "verify",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Verify"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/preapprove": {
+            "post": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "Resident invites a visitor. Returns a 6-digit passCode to share with them",
+                "operationId": "preApprove",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PreApprove"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List active users, optionally filtered by role",
+                "operationId": "list",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "RESIDENT",
+                                "GUARD",
+                                "COMMITTEE"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a user (flatNumber is required for residents)",
+                "operationId": "create",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark one of my notifications as read",
+                "operationId": "markRead",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotificationDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notices": {
+            "get": {
+                "tags": [
+                    "Notices"
+                ],
+                "summary": "Latest 50 notices, newest first",
+                "operationId": "list_1",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/NoticeDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Notices"
+                ],
+                "summary": "Committee posts a notice",
+                "operationId": "create_1",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateNoticeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NoticeDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries": {
+            "get": {
+                "tags": [
+                    "Deliveries"
+                ],
+                "summary": "List deliveries, newest first. Residents see their own flat; guards and committee see all",
+                "operationId": "list_2",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "AT_GATE",
+                                "COLLECTED",
+                                "RETURNED"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/DeliveryDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Deliveries"
+                ],
+                "summary": "Guard logs a delivery for a flat. Residents of the flat are notified",
+                "operationId": "log",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Log"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/return": {
+            "post": {
+                "tags": [
+                    "Deliveries"
+                ],
+                "summary": "Guard marks the package as returned to the courier",
+                "operationId": "markReturned",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/instruction": {
+            "post": {
+                "tags": [
+                    "Deliveries"
+                ],
+                "summary": "Resident says whether to leave the package at the gate or send it up",
+                "operationId": "instruct",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Instruct"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/deliveries/{id}/collect": {
+            "post": {
+                "tags": [
+                    "Deliveries"
+                ],
+                "summary": "Guard marks the package as collected by or delivered to the resident",
+                "operationId": "collect",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DeliveryDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Log in with phone and password. Returns a JWT and the user",
+                "operationId": "login",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/alerts": {
+            "get": {
+                "tags": [
+                    "Emergency alerts"
+                ],
+                "summary": "List alerts, newest first. Residents see alerts they raised; guards and committee see all",
+                "operationId": "list_3",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "ACKNOWLEDGED",
+                                "RESOLVED"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AlertDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Emergency alerts"
+                ],
+                "summary": "Raise an emergency alert (any role). All guards and committee members are notified",
+                "operationId": "raise",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RaiseAlertRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "Emergency alerts"
+                ],
+                "summary": "Guard or committee member closes the alert",
+                "operationId": "resolve",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/alerts/{id}/acknowledge": {
+            "post": {
+                "tags": [
+                    "Emergency alerts"
+                ],
+                "summary": "Guard or committee member says they are responding",
+                "operationId": "acknowledge",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AlertDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits": {
+            "get": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "List visits, newest first. Residents see their own flat; guards and committee see all",
+                "operationId": "list_4",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "PRE_APPROVED",
+                                "PENDING_APPROVAL",
+                                "APPROVED",
+                                "DENIED",
+                                "CHECKED_IN",
+                                "CHECKED_OUT",
+                                "CANCELLED"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VisitDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/visits/{id}": {
+            "get": {
+                "tags": [
+                    "Visits"
+                ],
+                "summary": "One visit",
+                "operationId": "get",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VisitDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reports/summary": {
+            "get": {
+                "tags": [
+                    "Reports"
+                ],
+                "summary": "Dashboard counts. visitorsToday counts check-ins since midnight in the community's time zone; activeAlerts counts alerts not yet resolved",
+                "operationId": "summary",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SummaryDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "My latest 100 notifications, newest first",
+                "operationId": "list_5",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/NotificationDto"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "The logged-in user",
+                "operationId": "me",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserDto"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/{id}": {
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Remove a user. The account is deactivated so its history is kept",
+                "operationId": "delete",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "VisitDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "visitorName": {
+                        "type": "string"
+                    },
+                    "visitorPhone": {
+                        "type": "string"
+                    },
+                    "purpose": {
+                        "type": "string"
+                    },
+                    "flatNumber": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "PRE_APPROVED",
+                            "PENDING_APPROVAL",
+                            "APPROVED",
+                            "DENIED",
+                            "CHECKED_IN",
+                            "CHECKED_OUT",
+                            "CANCELLED"
+                        ]
+                    },
+                    "passCode": {
+                        "type": "string"
+                    },
+                    "expectedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "validUntil": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "checkedInAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "checkedOutAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "createdByName": {
+                        "type": "string"
+                    }
+                }
+            },
+            "WalkIn": {
+                "type": "object",
+                "properties": {
+                    "visitorName": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 0
+                    },
+                    "visitorPhone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 0
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 0
+                    },
+                    "flatNumber": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "flatNumber",
+                    "visitorName"
+                ]
+            },
+            "Verify": {
+                "type": "object",
+                "properties": {
+                    "passCode": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "[0-9]{6}"
+                    }
+                },
+                "required": [
+                    "passCode"
+                ]
+            },
+            "PreApprove": {
+                "type": "object",
+                "properties": {
+                    "visitorName": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 0
+                    },
+                    "visitorPhone": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 0
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 0
+                    },
+                    "expectedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "visitorName"
+                ]
+            },
+            "CreateUserRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 0
+                    },
+                    "phone": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "\\+?[0-9]{10,15}"
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 6
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "RESIDENT",
+                            "GUARD",
+                            "COMMITTEE"
+                        ]
+                    },
+                    "flatNumber": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "name",
+                    "password",
+                    "phone",
+                    "role"
+                ]
+            },
+            "UserDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "RESIDENT",
+                            "GUARD",
+                            "COMMITTEE"
+                        ]
+                    },
+                    "flatNumber": {
+                        "type": "string"
+                    }
+                }
+            },
+            "NotificationDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "VISITOR_APPROVAL_REQUEST",
+                            "VISITOR_APPROVED",
+                            "VISITOR_DENIED",
+                            "VISITOR_ARRIVED",
+                            "DELIVERY_AT_GATE",
+                            "DELIVERY_INSTRUCTION",
+                            "EMERGENCY_ALERT",
+                            "ALERT_UPDATE",
+                            "NOTICE"
+                        ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "referenceId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "read": {
+                        "type": "boolean"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "CreateNoticeRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 0
+                    },
+                    "body": {
+                        "type": "string",
+                        "maxLength": 4000,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "body",
+                    "title"
+                ]
+            },
+            "NoticeDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "postedByName": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Log": {
+                "type": "object",
+                "properties": {
+                    "flatNumber": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "minLength": 0
+                    },
+                    "courier": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 0
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "courier",
+                    "flatNumber"
+                ]
+            },
+            "DeliveryDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "flatNumber": {
+                        "type": "string"
+                    },
+                    "courier": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "AT_GATE",
+                            "COLLECTED",
+                            "RETURNED"
+                        ]
+                    },
+                    "instruction": {
+                        "type": "string",
+                        "enum": [
+                            "LEAVE_AT_GATE",
+                            "SEND_UP"
+                        ]
+                    },
+                    "receivedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "collectedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "loggedByName": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Instruct": {
+                "type": "object",
+                "properties": {
+                    "instruction": {
+                        "type": "string",
+                        "enum": [
+                            "LEAVE_AT_GATE",
+                            "SEND_UP"
+                        ]
+                    }
+                },
+                "required": [
+                    "instruction"
+                ]
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "password",
+                    "phone"
+                ]
+            },
+            "LoginResponse": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/UserDto"
+                    }
+                }
+            },
+            "RaiseAlertRequest": {
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "MEDICAL",
+                            "FIRE",
+                            "SECURITY",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "minLength": 0
+                    }
+                },
+                "required": [
+                    "type"
+                ]
+            },
+            "AlertDto": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "MEDICAL",
+                            "FIRE",
+                            "SECURITY",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "ACKNOWLEDGED",
+                            "RESOLVED"
+                        ]
+                    },
+                    "raisedByName": {
+                        "type": "string"
+                    },
+                    "raisedByPhone": {
+                        "type": "string"
+                    },
+                    "flatNumber": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "acknowledgedByName": {
+                        "type": "string"
+                    },
+                    "acknowledgedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "resolvedByName": {
+                        "type": "string"
+                    },
+                    "resolvedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "SummaryDto": {
+                "type": "object",
+                "properties": {
+                    "visitorsToday": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "pendingApprovals": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "deliveriesAtGate": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "activeAlerts": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "residents": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "guards": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}
