@@ -15,4 +15,5 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - run: ./mvnw -B verify
+      # Uses the runner's preinstalled Maven: the wrapper's wget download fails on GitHub-hosted runners.
+      - run: mvn -B verify
