@@ -1,0 +1,10 @@
+# Tests run on a fresh in-memory H2 database (PostgreSQL mode) per Spring context, migrated by the same Flyway scripts.
+spring:
+  datasource:
+    url: jdbc:h2:mem:test-${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+
+app:
+  push:
+    provider: log

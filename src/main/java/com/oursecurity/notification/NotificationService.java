@@ -4,6 +4,7 @@ import com.oursecurity.common.ApiException;
 import com.oursecurity.user.Role;
 import com.oursecurity.user.User;
 import com.oursecurity.user.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,17 +16,24 @@ public class NotificationService {
 
     private final NotificationRepository notifications;
     private final UserRepository users;
-    private final PushSender pushSender;
+    private final ApplicationEventPublisher events;
 
-    public NotificationService(NotificationRepository notifications, UserRepository users, PushSender pushSender) {
+    public NotificationService(NotificationRepository notifications, UserRepository users,
+                               ApplicationEventPublisher events) {
         this.notifications = notifications;
         this.users = users;
-        this.pushSender = pushSender;
+        this.events = events;
     }
 
     /** Notifies every active resident of a flat. */
     public void notifyFlat(String flatNumber, NotificationType type, String title, String body, Long refId) {
         notifyAll(users.findByRoleAndFlatNumberIgnoreCaseAndActiveTrue(Role.RESIDENT, flatNumber), type, title, body, refId);
+    }
+
+    /** Notifies every active user except {@code except}. */
+    public void notifyEveryone(User except, NotificationType type, String title, String body, Long refId) {
+        notifyAll(users.findByActiveTrueOrderByNameAsc().stream().filter(u -> !u.getId().equals(except.getId())).toList(),
+                type, title, body, refId);
     }
 
     /** Notifies every active user with one of the given roles. */
@@ -42,7 +50,9 @@ public class NotificationService {
             n.setBody(body);
             n.setReferenceId(refId);
             notifications.save(n);
-            pushSender.send(recipient, n);
+        }
+        if (!recipients.isEmpty()) {
+            events.publishEvent(new PushRequested(recipients.stream().map(User::getId).toList(), type, title, body, refId));
         }
     }
 
