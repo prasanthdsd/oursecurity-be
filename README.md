@@ -1,7 +1,7 @@
 # OurSecurity backend
 
 REST API for the OurSecurity gated community app, built with Java 21 and Spring Boot 3.5.
-It serves the mobile app in [oursecurity-fe](https://github.com/prasanthdsd/oursecurity-fe).
+It stores data in PostgreSQL and serves the mobile app in [oursecurity-fe](https://github.com/prasanthdsd/oursecurity-fe).
 
 ## What it does
 
@@ -19,19 +19,59 @@ It serves the mobile app in [oursecurity-fe](https://github.com/prasanthdsd/ours
 | Reports | committee | Dashboard counts: visitors today, pending approvals, deliveries at gate, open alerts, residents, guards. |
 | Notifications | everyone | In-app notifications plus push notifications to phones (through Expo) for approval requests, arrivals, deliveries, alerts and notices. |
 
-## Run it locally
+## Run it locally (Mac)
 
-Needs Java 21. No database setup: it uses an in-memory H2 database by default and seeds demo users.
+The backend stores everything in PostgreSQL, so your test data survives restarts.
+
+**1. Install once**
+
+- Java 21 (IntelliJ can download it: *File → Project Structure → SDK → Download JDK → version 21*).
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) for the database. Start it once so the whale icon shows in the menu bar.
+
+**2. Start the database**
 
 ```bash
-./mvnw spring-boot:run
+cd oursecurity-be
+docker compose up -d
 ```
 
-- API: http://localhost:8080/api
-- Swagger UI: http://localhost:8080/swagger-ui.html
-- OpenAPI spec: http://localhost:8080/v3/api-docs (a copy is checked in at [docs/openapi.json](docs/openapi.json))
+This starts PostgreSQL 16 on `localhost:5432` (database, user and password are all `oursecurity`). Data is kept in a Docker volume,
+so `docker compose down` and `up` again keep it. `docker compose down -v` wipes it and you start fresh.
 
-### Demo users (seeded on an empty database)
+**3. Start the backend**
+
+- IntelliJ: open the `oursecurity-be` folder, wait for Maven to load, then run `OurSecurityApplication` (green ▶ next to `main`).
+- Or in a terminal: `./mvnw spring-boot:run`
+
+On first start, Flyway creates the tables and the demo users below are added. Check http://localhost:8080/swagger-ui.html.
+
+**4. Use it from your iPhone**
+
+The phone and the Mac must be on the same Wi-Fi.
+
+1. Find the Mac's address: `ipconfig getifaddr en0` (e.g. `192.168.1.23`).
+2. Point the mobile app at `http://192.168.1.23:8080/api` (see the oursecurity-fe README for where to set it).
+3. If the phone can't connect, allow incoming connections for Java when macOS asks, or check *System Settings → Network → Firewall*.
+
+**Look at the data**
+
+Connect any database tool (IntelliJ's *Database* tab, TablePlus, DBeaver) to `localhost:5432`, database `oursecurity`,
+user `oursecurity`, password `oursecurity`. Or: `docker exec -it oursecurity-postgres psql -U oursecurity`.
+
+**Without Docker**
+
+Install PostgreSQL another way (for example [Postgres.app](https://postgresapp.com)), create a database and user, and set
+`DB_URL`, `DB_USERNAME` and `DB_PASSWORD` (in IntelliJ: *Run → Edit Configurations → Environment variables*).
+
+### Changing the database schema
+
+Tables are managed only by [Flyway](https://documentation.red-gate.com/flyway) scripts in `src/main/resources/db/migration`.
+To change the schema, add a new file such as `V2__add_vehicle_number.sql`; never edit a script that has already run.
+Hibernate checks at startup that the entities match the tables (`ddl-auto=validate`).
+
+### Demo users (added to an empty database, with a welcome notice)
+
+API: http://localhost:8080/api · Swagger UI: http://localhost:8080/swagger-ui.html · OpenAPI spec: http://localhost:8080/v3/api-docs (copy in [docs/openapi.json](docs/openapi.json))
 
 | Role | Phone | Password | Flat |
 |---|---|---|---|
@@ -111,7 +151,7 @@ Set with environment variables:
 | Variable | Default | Notes |
 |---|---|---|
 | `PORT` | 8080 | |
-| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | in-memory H2 | e.g. `jdbc:postgresql://host:5432/oursecurity` |
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | `jdbc:postgresql://localhost:5432/oursecurity`, `oursecurity`, `oursecurity` | matches docker-compose.yml |
 | `JWT_SECRET` | dev-only value | 32+ characters. Must be set in production. |
 | `JWT_EXPIRY` | 7d | |
 | `CORS_ALLOWED_ORIGINS` | `*` | comma-separated |
@@ -129,12 +169,13 @@ Production: `SPRING_PROFILES_ACTIVE=prod` with PostgreSQL. It requires `DB_URL`,
 ./mvnw test
 ```
 
+Tests need no database or Docker: each test context gets its own in-memory H2 database (PostgreSQL mode), built by the same Flyway scripts.
+
 `ApiFlowTest` runs the main flows end to end through the HTTP API: login, pre-approval with pass code, walk-in approval, deliveries, emergency alerts, user management, notices and role checks.
 `PushFlowTest` covers device registration and which pushes each event sends, and `ExpoPushGatewayTest` covers the Expo request format, batching and dead-token handling.
 
 ## Not done yet
 
 - Push receipts. Expo's second step (checking receipts about 15 minutes later) is not polled yet, so some dead tokens are only removed on the next send.
-- Schema migrations. Hibernate creates the tables (`ddl-auto=update`); switch to Flyway before real data.
 - One community per deployment. Multi-community support would add a community id to users and records.
 - Password reset, OTP login, refresh tokens, visitor photos, and rate limiting on login.

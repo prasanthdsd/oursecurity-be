@@ -1,4 +1,4 @@
-# Activate with SPRING_PROFILES_ACTIVE=prod. Expects PostgreSQL and a real JWT secret.
+# Activate with SPRING_PROFILES_ACTIVE=prod. Database credentials, JWT secret and CORS origins must be set; no demo data.
 spring:
   datasource:
     url: ${DB_URL}

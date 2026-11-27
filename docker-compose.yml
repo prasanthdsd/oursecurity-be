@@ -1,0 +1,22 @@
+# Local PostgreSQL for development: `docker compose up -d`. Data is kept in the pgdata volume between restarts.
+services:
+  postgres:
+    image: postgres:16
+    container_name: oursecurity-postgres
+    environment:
+      POSTGRES_DB: oursecurity
+      POSTGRES_USER: oursecurity
+      POSTGRES_PASSWORD: oursecurity
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oursecurity -d oursecurity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  pgdata:
